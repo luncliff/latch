@@ -1,87 +1,69 @@
 ﻿#include <atomic>
 #include <latch.hpp>
-#include <synchapi.h>
 #include <system_error>
 #include <type_traits>
 
+// clang-format off
 #include <Windows.h>
+#include <synchapi.h>
+// clang-format on
 
 namespace std {
 
     static_assert(is_copy_assignable_v<latch> == false);
     static_assert(is_copy_constructible_v<latch> == false);
 
-    latch::latch(ptrdiff_t delta) noexcept(false) {
-        HANDLE ev = CreateEventEx(nullptr, nullptr, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);
-        if (ev == NULL)
-            throw system_error{GetLastError(), system_category(), "CreateEventEx"};
+    latch::latch(ptrdiff_t expected) noexcept(false) : counter{expected}, handle{nullptr} {
+        if (expected < 0)
+            throw invalid_argument{"expected value should be zero or positive"};
 
-        std::atomic_uint32_t ref = delta;
+        // if expected == 0, start with signaled
+        handle = CreateEventExW(nullptr, nullptr, //
+            expected ? CREATE_EVENT_MANUAL_RESET : CREATE_EVENT_INITIAL_SET, //
+            EVENT_MODIFY_STATE);
+        if (handle == NULL)
+            throw system_error{static_cast<int>(GetLastError()), system_category(), "CreateEventEx"};
     }
 
     latch::~latch() {
-        // CloseHandle(ev);
+        CloseHandle(handle);
     }
 
-    void latch::count_down_and_wait() noexcept(false) {
-        this->count_down();
+    void latch::arrive_and_wait(ptrdiff_t update) noexcept(false) {
+        this->count_down(update);
         this->wait();
     }
 
-    void latch::count_down(uint32_t n) noexcept(false) {
+    void latch::count_down(ptrdiff_t update) noexcept(false) {
+        if (counter < update)
+            throw invalid_argument{"latch's counter can't be negative"};
 
-        if (ref.load(memory_order_acquire) < n)
-            throw underflow_error{"latch's count can't be negative"};
-
-        ref.fetch_sub(n, memory_order_release);
-        if (ref.load(memory_order_acquire) == 0)
-            SetEvent(ev);
+        if constexpr (std::atomic<ptrdiff_t>::is_always_lock_free) {
+            counter -= update;
+        } else {
+            std::atomic_fetch_sub(reinterpret_cast<std::atomic_ptrdiff_t*>(&counter), update);
+        }
+        if (counter == 0)
+            SetEvent(handle);
     }
 
-    // GSL_SUPPRESS(f .23)
-    // GSL_SUPPRESS(con .4)
-    bool latch::is_ready() const noexcept {
-        if (ref.load(memory_order_acquire) > 0)
+    bool latch::try_wait() const noexcept {
+        // allow interrupt by APC or I/O works
+        switch (WaitForSingleObjectEx(handle, INFINITE, TRUE)) {
+        case WAIT_OBJECT_0:
+            return counter == 0;
+        case WAIT_TIMEOUT: // won't happen
+        case WAIT_ABANDONED: // not for the event type handle
+        case WAIT_IO_COMPLETION: // expected
+        case WAIT_FAILED:
+        default:
             return false;
-
-        if (ev == INVALID_HANDLE_VALUE)
-            return true;
-
-        // if it is not closed, test it
-        auto ec = WaitForSingleObjectEx(ev, 0, TRUE);
-        if (ec == WAIT_OBJECT_0) {
-            // WAIT_OBJECT_0 : return by signal
-            this->~latch();
-            return true;
         }
-        return false;
     }
 
-    // GSL_SUPPRESS(es .76)
-    void latch::wait() noexcept(false) {
-        static_assert(WAIT_OBJECT_0 == 0);
-
-    StartWait:
-        if (this->is_ready())
-            return;
-
-        // standard interface doesn't define timed wait.
-        // This makes APC available. expecially for Overlapped I/O
-        if (const auto ec = WaitForSingleObjectEx(ev, 1536, TRUE)) {
-            // WAIT_IO_COMPLETION : return because of APC
-            if (ec == WAIT_IO_COMPLETION)
-                goto StartWait;
-            // WAIT_TIMEOUT	: this is expected. try again
-            if (ec == WAIT_TIMEOUT)
-                goto StartWait;
-
-            // WAIT_FAILED	: use GetLastError in the case
-            // WAIT_ABANDONED
-            throw system_error{gsl::narrow_cast<int>(GetLastError()), system_category(), "WaitForSingleObjectEx"};
-        }
-        // WAIT_OBJECT_0 : return by signal
-        this->~latch();
-        return;
+    void latch::wait() const noexcept(false) {
+        while (try_wait() == false)
+            throw system_error{static_cast<int>(GetLastError()), system_category(), "WaitForSingleObjectEx"};
     }
 
 }

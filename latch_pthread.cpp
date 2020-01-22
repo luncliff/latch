@@ -5,6 +5,9 @@
 
 using namespace std;
 using namespace std::chrono;
+// std::atomic_uint64_t ref{};
+// pthread_cond_t cv{};
+// pthread_mutex_t mtx{};
 
 void setup_mutex_attr(pthread_mutexattr_t& attr) noexcept(false) {
     if (auto ec = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK))

@@ -12,10 +12,10 @@ PROPERTIES
     PUBLIC_HEADER latch.hpp
 )
 
-# target_include_directories(latch
-# PUBLIC
-#     $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
-# )
+target_include_directories(latch
+PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+)
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     if(WIN32)
@@ -81,7 +81,7 @@ add_executable(latch_test
 )
 target_link_libraries(latch_test
 PRIVATE
-    Catch2::Catch2
+    Catch2::Catch2 latch
 )
 add_test(NAME test_1    COMMAND latch_test)
 
