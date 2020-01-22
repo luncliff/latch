@@ -9,11 +9,11 @@ steps:
   - task: PowerShell@2
     inputs:
       targetType: "inline"
-      script: systeminfo
+      script: vcpkg install --triplet x64-windows catch2
 
   - task: CMake@1
     inputs:
-      cmakeArgs: . -A $(platform) -DBUILD_SHARED_LIBS=$(is_dynamic)
+      cmakeArgs: . -A $(platform) -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg\scripts\buildsystems\vcpkg.cmake"
       workingDirectory: "."
 
   - task: MSBuild@1

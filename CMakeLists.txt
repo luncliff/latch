@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(latch LANGUAGES CXX)
+project(latch VERSION 1.0 LANGUAGES CXX)
 
 add_library(latch
     latch.hpp
