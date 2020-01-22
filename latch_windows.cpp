@@ -17,10 +17,9 @@ namespace std {
         if (expected < 0)
             throw invalid_argument{"expected value should be zero or positive"};
 
-        // if expected == 0, start with signaled
-        handle = CreateEventExW(nullptr, nullptr, //
-            expected ? CREATE_EVENT_MANUAL_RESET : CREATE_EVENT_INITIAL_SET, //
-            EVENT_MODIFY_STATE);
+        handle = CreateEventExW(nullptr, nullptr,
+            // if expected == 0, start with signaled
+            expected == 0 ? CREATE_EVENT_INITIAL_SET : CREATE_EVENT_MANUAL_RESET, EVENT_MODIFY_STATE);
         if (handle == NULL)
             throw system_error{static_cast<int>(GetLastError()), system_category(), "CreateEventEx"};
     }

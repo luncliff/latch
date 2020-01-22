@@ -20,4 +20,5 @@ namespace std {
         ptrdiff_t counter;
         void* handle;
     };
+
 } // namespace std

@@ -29,3 +29,8 @@ steps:
   #       **\*vstest*.dll
   #     codeCoverageEnabled: true
   #   continueOnError: true
+
+  - task: PowerShell@2
+    inputs:
+      targetType: "inline"
+      script: ctest -C Debug
