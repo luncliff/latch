@@ -1,12 +1,11 @@
 #pragma once
-#include <cstdint>
+#include <cstddef>
 
 namespace std {
-
     class latch {
     public:
-        /*constexpr*/ explicit latch(ptrdiff_t expected) noexcept(false);
-        ~latch();
+        constexpr explicit latch(ptrdiff_t expected) noexcept : counter{expected} {}
+        ~latch() = default;
 
         latch(const latch&) = delete;
         latch& operator=(const latch&) = delete;
@@ -18,7 +17,5 @@ namespace std {
 
     private:
         ptrdiff_t counter;
-        void* handle;
     };
-
 } // namespace std
