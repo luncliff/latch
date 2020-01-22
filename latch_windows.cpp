@@ -1,9 +1,10 @@
-﻿#include <atomic>
-#include <latch.hpp>
+﻿#include <latch.hpp>
+
+// clang-format off
+#include <atomic>
 #include <system_error>
 #include <type_traits>
 
-// clang-format off
 #include <Windows.h>
 #include <synchapi.h>
 // clang-format on

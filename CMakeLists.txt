@@ -41,7 +41,7 @@ if(WIN32)
 
     target_link_libraries(latch
     PUBLIC
-        kernel32
+        kernel32 synchronization
     )
 endif()
 
