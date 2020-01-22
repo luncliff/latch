@@ -1,0 +1,58 @@
+#
+# Author: github.com/luncliff (luncliff@gmail.com)
+#
+# References
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops#use-a-microsoft-hosted-agent
+#   https://github.com/Microsoft/azure-pipelines-image-generation/blob/master/images/win/Vs2019-Server2019-Readme.md
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/process/conditions?view=azure-devops&tabs=yaml
+#
+
+jobs:
+  - job: vs2017_cmake_vs_msvc141
+    pool:
+      vmImage: "vs2017-win2016"
+    variables:
+      platform: x64
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-win-vs.yml
+        parameters:
+          toolset: v141
+
+  - job: vs2019_cmake_vs_msvc142
+    pool:
+      vmImage: "windows-2019"
+    variables:
+      platform: x64
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-win-vs.yml
+        parameters:
+          toolset: v142
+
+  - job: vs2017_cmake_ninja_clang9
+    pool:
+      vmImage: "vs2017-win2016"
+    variables:
+      visualstudio: 2017
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-win-llvm.yml
+        parameters:
+          llvm_version: "9.0.0"
+
+  - job: vs2019_cmake_ninja_clang9
+    pool:
+      vmImage: windows-2019
+    variables:
+      visualstudio: 2019
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-win-llvm.yml
+        parameters:
+          llvm_version: "9.0.0"
