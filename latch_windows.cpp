@@ -1,4 +1,4 @@
-﻿#include <latch.hpp>
+﻿#include "latch.hpp"
 
 // clang-format off
 #include <atomic>
@@ -22,29 +22,29 @@ namespace std {
     void latch::count_down(ptrdiff_t update) noexcept(false) {
         static_assert(is_same_v<ptrdiff_t, LONG64> || is_same_v<ptrdiff_t, LONG>);
         if (counter < update)
-            throw invalid_argument{"latch's counter can't be negative"};
-
+            throw system_error{EINVAL, system_category(), "update is greater than counter"};
         // if not lock-free, rely on InterLocked operation
-        if constexpr (std::atomic<ptrdiff_t>::is_always_lock_free) {
+        if constexpr (atomic<ptrdiff_t>::is_always_lock_free) {
             counter -= update;
         } else if constexpr (is_same_v<ptrdiff_t, LONG>) {
             InterlockedAdd(reinterpret_cast<LONG*>(&counter), static_cast<LONG>(-update));
         } else if constexpr (is_same_v<ptrdiff_t, LONG64>) {
             InterlockedAdd64(reinterpret_cast<LONG64*>(&counter), static_cast<LONG64>(-update));
         }
-
         // counter reached zero
         if (counter == 0)
             WakeByAddressAll(&counter);
     }
 
     bool latch::try_wait() const noexcept {
+        // if counter equals zero, returns immediately
         if (counter == 0)
             return true;
-
+        // blocks on `*this` until a call to count_down that decrements counter to zero
         ptrdiff_t captured = counter;
         if (WaitOnAddress(const_cast<ptrdiff_t*>(&counter), &captured, sizeof(ptrdiff_t), INFINITE))
             return counter == 0;
+        // caller can check `GetLastError` for this case
         return false;
     }
 

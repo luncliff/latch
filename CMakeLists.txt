@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(latch VERSION 1.0 LANGUAGES CXX)
 
+message(STATUS "using system: ${CMAKE_SYSTEM_NAME}")
 add_library(latch
     latch.hpp
-    latch_windows.cpp
+    latch_${CMAKE_SYSTEM_NAME}.cpp
 )
 
 set_target_properties(latch
@@ -83,5 +84,9 @@ target_link_libraries(latch_test
 PRIVATE
     Catch2::Catch2 latch
 )
-add_test(NAME test_1    COMMAND latch_test)
-
+add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
+add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")
+add_test(NAME test_ctor_p   COMMAND latch_test "latch ctor positive")
+add_test(NAME test_wait     COMMAND latch_test "latch wait")
+add_test(NAME test_try_wait COMMAND latch_test "latch try_wait")
+add_test(NAME test_awake    COMMAND latch_test "latch awake")
