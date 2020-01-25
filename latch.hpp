@@ -52,8 +52,24 @@ namespace std {
          * Any of the error conditions allowed for mutex types (32.5.3.2)
          */
         void count_down(ptrdiff_t update = 1) noexcept(false);
+        /**
+         * @return true     `counter` equals zero
+         * @return false    Very low probability of failure from system call
+         */
         bool try_wait() const noexcept;
+        /**
+         * @throw   system_error
+         * @details
+         * If `counter` equals zero, returns immediately.
+         * Otherwise, blocks on `*this` until a call to `count_down` that decrements `counter` to zero
+         */
         void wait() const noexcept(false);
+        /**
+         * @param   update  input for `count_down`
+         * @example
+         * count_down(update);
+         * wait();
+         */
         void arrive_and_wait(ptrdiff_t update = 1) noexcept(false);
 
     private:
