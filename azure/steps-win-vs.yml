@@ -23,14 +23,8 @@ steps:
       platform: $(platform)
       configuration: $(configuration)
       msbuildArguments: "/p:platformtoolset=${{ parameters.toolset }}"
-  # - task: VSTest@2
-  #   inputs:
-  #     testAssemblyVer2: |
-  #       **\*vstest*.dll
-  #     codeCoverageEnabled: true
-  #   continueOnError: true
 
   - task: PowerShell@2
     inputs:
       targetType: "inline"
-      script: ctest -C Debug
+      script: ctest --output-on-failure -C Debug

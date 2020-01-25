@@ -1,0 +1,28 @@
+#
+# install:
+#   - pip install -r requirements.txt
+#
+# script:
+#   - doxygen ./docs/Doxyfile
+#   - doxybook -i docs/xml -o docs -t mkdocs
+#   - mkdocs build
+#
+site_name: latch
+repo_url: https://github.com/luncliff/latch
+
+nav:
+  - index: modules.md
+  - thread.coord: group__thread.md
+  - latch: classstd_1_1latch.md
+  - files: files.md
+
+markdown_extensions:
+  - admonition
+
+theme:
+  name: "readthedocs"
+
+extra:
+  social:
+    - type: "github"
+      link: "https://github.com/luncliff"

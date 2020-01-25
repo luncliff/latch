@@ -35,9 +35,10 @@ RECURSIVE              = YES
 EXCLUDE                = test \
                          build \
                          install \
-                         docs/xml
+                         docs
 
-EXCLUDE_PATTERNS        = */*.md
+EXCLUDE_PATTERNS        = */*.md \
+                          */*_test.cpp
 
 EXAMPLE_PATH           = examples
 EXAMPLE_RECURSIVE      = NO
