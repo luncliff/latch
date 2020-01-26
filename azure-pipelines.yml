@@ -83,6 +83,32 @@ jobs:
           cmake_work_dir: "build-ub"
           cmake_install_dir: "../install"
 
+  - job: ubuntu_cmake_gcc8_debug
+    pool:
+      vmImage: "ubuntu-latest"
+    variables:
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-ubuntu.yml
+        parameters:
+          cmake_cxx_compiler: "g++-8"
+          cmake_work_dir: "build-ub"
+          cmake_install_dir: "../install"
+
+  - job: ubuntu_cmake_gcc8_release
+    pool:
+      vmImage: "ubuntu-latest"
+    variables:
+      configuration: Release
+      is_dynamic: True
+    steps:
+      - template: azure/steps-ubuntu.yml
+        parameters:
+          cmake_cxx_compiler: "g++-8"
+          cmake_work_dir: "build-ub"
+          cmake_install_dir: "../install"
+
   - job: mac_cmake_appleclang11_debug
     pool:
       vmImage: "macos-latest"
