@@ -1,21 +1,34 @@
 cmake_minimum_required(VERSION 3.12)
 project(latch VERSION 1.0 LANGUAGES CXX)
 
-message(STATUS "using system: ${CMAKE_SYSTEM_NAME}")
+string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
+message(STATUS "using system: ${SYSTEM_NAME}")
+
 add_library(latch
     latch.hpp
-    latch_${CMAKE_SYSTEM_NAME}.cpp
+    latch_${SYSTEM_NAME}.cpp
 )
 
 set_target_properties(latch
 PROPERTIES
     CXX_STANDARD 20
-    PUBLIC_HEADER latch.hpp
 )
+if(APPLE)
+    set_target_properties(latch
+    PROPERTIES
+        PUBLIC_HEADER latch_darwin.hpp
+    )
+else()
+    set_target_properties(latch
+    PROPERTIES
+        PUBLIC_HEADER latch.hpp
+    )
+endif()
 
 target_include_directories(latch
 PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
@@ -25,6 +38,10 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
         target_compile_options(latch
         PUBLIC
             -stdlib=libc++
+        )
+        target_link_libraries(latch
+        PUBLIC
+            c++
         )
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES MSVC)
@@ -44,19 +61,25 @@ if(WIN32)
     PUBLIC
         kernel32 synchronization
     )
+elseif(LINUX)
+    target_link_libraries(latch
+    PUBLIC
+        stdc++
+    )
 endif()
 
-
+# the header is always installed
 install(FILES   latch.hpp
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
+        TYPE        INCLUDE
+        # DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
-
 install(TARGETS         latch
         EXPORT          ${PROJECT_NAME}-config
         RUNTIME  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         LIBRARY  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         ARCHIVE  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        INCLUDES DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+        PUBLIC_HEADER 
+                 DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
 install(EXPORT      ${PROJECT_NAME}-config
@@ -75,15 +98,30 @@ install(FILES           ${VERSION_FILE_PATH}
 )
 
 enable_testing()
-find_package(Catch2 CONFIG REQUIRED)
+find_package(Threads REQUIRED)
+# use 'external/catch2.zip' if not found
+find_package(Catch2 2.10 CONFIG REQUIRED
+    PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
+)
+get_target_property(Catch2_INCLUDE_DIR Catch2::Catch2
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+message(STATUS "using Catch2: ${Catch2_INCLUDE_DIR}")
 
 add_executable(latch_test
     latch_test.cpp
 )
 target_link_libraries(latch_test
 PRIVATE
-    Catch2::Catch2 latch
+    Threads::Threads Catch2::Catch2 latch
 )
+if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
+    target_link_libraries(latch_test
+    PRIVATE
+        m
+    )
+endif()
+
 add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
 add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")
 add_test(NAME test_ctor_p   COMMAND latch_test "latch ctor positive")

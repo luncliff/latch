@@ -1,0 +1,37 @@
+#
+# Author: github.com/luncliff (luncliff@gmail.com)
+#
+# References
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops#passing-parameters
+#
+
+steps:
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        brew info llvm;
+        brew info cmake;
+
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        unzip ./external/catch2.zip -d external
+
+  - task: CMake@1
+    inputs:
+      cmakeArgs: .. -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_BUILD_TYPE=$(configuration) -DCMAKE_INSTALL_PREFIX=${{ parameters.cmake_install_dir }} -DCatch2_DIR="../external/share/Catch2"
+      workingDirectory: ${{ parameters.cmake_work_dir }}
+
+  - task: CMake@1
+    inputs:
+      cmakeArgs: --build . --target install --config $(configuration)
+      workingDirectory: ${{ parameters.cmake_work_dir }}
+
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: ctest --output-on-failure
+      workingDirectory: ${{ parameters.cmake_work_dir }}
+    timeoutInMinutes: 1
