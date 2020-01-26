@@ -74,11 +74,9 @@ bool latch::try_wait() const noexcept {
         return true;
 
     const timespec timeout{.tv_sec = 3};
-    auto captured = ctr->load();
-    if (futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), captured,
-                              &timeout) == 0)
-        return counter == 0;
-    return false;
+    futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), ctr->load(),
+                          &timeout);
+    return counter == 0;
 }
 
 void latch::wait() const noexcept(false) {
@@ -86,9 +84,10 @@ void latch::wait() const noexcept(false) {
         /// @todo need implementation for spurious wakeup
         switch (errno) {
         case 0:
-        case EINTR:  // spurious wake up
-        case EAGAIN: // under race. try again
-            continue;
+        case ETIMEDOUT: // timeout reached
+        case EINTR:     // spurious wake up
+        case EAGAIN:    // under race
+            continue;   // ... try again
         default:
             throw system_error{errno, system_category(),
                                "futex_wait_on_address"};
