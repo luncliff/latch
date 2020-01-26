@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
 project(latch VERSION 1.0 LANGUAGES CXX)
 
-message(STATUS "using system: ${CMAKE_SYSTEM_NAME}")
+string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
+message(STATUS "using system: ${SYSTEM_NAME}")
+
 add_library(latch
     latch.hpp
-    latch_${CMAKE_SYSTEM_NAME}.cpp
+    latch_${SYSTEM_NAME}.cpp
 )
 
 set_target_properties(latch
@@ -43,6 +45,11 @@ if(WIN32)
     target_link_libraries(latch
     PUBLIC
         kernel32 synchronization
+    )
+elseif(APPLE)
+    target_link_libraries(latch
+    PUBLIC
+        ${CMAKE_DL_LIBS}
     )
 endif()
 

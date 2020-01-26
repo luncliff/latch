@@ -5,13 +5,16 @@
 //
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
+
+#include <chrono>
 #include <future>
 #include <latch.hpp>
 
 using namespace std;
+using namespace std::chrono;
 
 TEST_CASE("latch ctor zero") {
-    latch wg{0}; // Expects: expected >= 0 is true
+    latch wg{0};            // Expects: expected >= 0 is true
     REQUIRE(wg.try_wait()); // counter == 0
 }
 
@@ -45,11 +48,12 @@ TEST_CASE("latch wait") {
     latch wg{2};
 
     SECTION("wait then count_down") {
-        auto f = async(launch::async, [&wg]() -> void {
-            // blocks on *this until a call to count_down that decrements counter to zero
-            return wg.wait();
-        });
-        this_thread::sleep_for(300ms);
+        auto f = async(launch::async, //
+                       [&wg]() -> void {
+                           // blocks on *this until a call to count_down that decrements counter to zero
+                           return wg.wait();
+                       });
+        this_thread::sleep_for(milliseconds{300});
 
         REQUIRE_NOTHROW(wg.count_down(1));
         REQUIRE_NOTHROW(wg.count_down(1));
@@ -63,7 +67,8 @@ TEST_CASE("latch wait") {
         // wg.count_down(2);
         // wg.wait();
         REQUIRE_NOTHROW(wg.arrive_and_wait(2));
-        REQUIRE_NOTHROW(wg.wait()); // if counter equals zero, returns immediately
+        REQUIRE_NOTHROW(
+            wg.wait()); // if counter equals zero, returns immediately
     }
 }
 
@@ -71,11 +76,12 @@ TEST_CASE("latch try_wait") {
     latch wg{1};
 
     SECTION("wait then count_down") {
-        auto f = async(launch::async, [&wg]() -> bool {
-            // With very low probability false, Otherwise counter == 0
-            return wg.try_wait();
-        });
-        this_thread::sleep_for(300ms);
+        auto f = async(launch::async, //
+                       [&wg]() -> bool {
+                           // With very low probability false, Otherwise counter == 0
+                           return wg.try_wait();
+                       });
+        this_thread::sleep_for(milliseconds{300});
 
         REQUIRE_NOTHROW(wg.count_down(1));
         REQUIRE(f.get() == true); // TODO: check system error code toghether
@@ -86,10 +92,13 @@ TEST_CASE("latch awake") {
     latch wg{3};
 
     SECTION("awake multiple threads") {
-        auto f1 = async(launch::async, [&wg]() -> bool { return wg.try_wait(); });
-        auto f2 = async(launch::async, [&wg]() -> void { return wg.wait(); });
-        auto f3 = async(launch::async, [&wg]() -> void { return wg.arrive_and_wait(2); });
-        this_thread::sleep_for(300ms);
+        auto f1 = async(launch::async, //
+                        [&wg]() -> bool { return wg.try_wait(); });
+        auto f2 = async(launch::async, //
+                        [&wg]() -> void { return wg.wait(); });
+        auto f3 = async(launch::async, //
+                        [&wg]() -> void { return wg.arrive_and_wait(2); });
+        this_thread::sleep_for(milliseconds{300});
 
         REQUIRE_NOTHROW(wg.count_down(1));
         REQUIRE(f1.get() == true);
