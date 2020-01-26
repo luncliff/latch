@@ -33,4 +33,5 @@ steps:
     inputs:
       targetType: "inline"
       script: ctest --output-on-failure
+      workingDirectory: ${{ parameters.cmake_work_dir }}
     timeoutInMinutes: 1

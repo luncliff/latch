@@ -82,7 +82,14 @@ install(FILES           ${VERSION_FILE_PATH}
 )
 
 enable_testing()
-find_package(Catch2 CONFIG REQUIRED)
+# use 'external/catch2.zip' if not found
+find_package(Catch2 2.10 CONFIG REQUIRED
+    PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
+)
+get_target_property(Catch2_INCLUDE_DIR Catch2::Catch2
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+message(STATUS "using Catch2: ${Catch2_INCLUDE_DIR}")
 
 add_executable(latch_test
     latch_test.cpp
