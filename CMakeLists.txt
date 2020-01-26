@@ -104,6 +104,12 @@ target_link_libraries(latch_test
 PRIVATE
     Threads::Threads Catch2::Catch2 latch
 )
+if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
+    target_link_libraries(latch_test
+    PRIVATE
+        m
+    )
+endif()
 
 add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
 add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")
