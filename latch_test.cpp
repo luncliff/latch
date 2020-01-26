@@ -12,9 +12,9 @@
 #include <future>
 
 #if defined(__APPLE__)
-#include <latch_darwin.hpp>
+#include <latch_darwin.h>
 #else
-#include <latch.hpp>
+#include <latch.h>
 #endif
 
 using namespace std;

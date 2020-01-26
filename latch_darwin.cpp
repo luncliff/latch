@@ -1,4 +1,4 @@
-#include "latch_darwin.hpp"
+#include "latch_darwin.h"
 
 // clang-format off
 #include <chrono>

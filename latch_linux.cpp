@@ -1,4 +1,4 @@
-﻿#include "latch.hpp"
+﻿#include "latch.h"
 
 #include <atomic>
 #include <climits>

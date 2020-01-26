@@ -5,7 +5,7 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 message(STATUS "using system: ${SYSTEM_NAME}")
 
 add_library(latch
-    latch.hpp
+    latch.h
     latch_${SYSTEM_NAME}.cpp
 )
 
@@ -16,12 +16,12 @@ PROPERTIES
 if(APPLE)
     set_target_properties(latch
     PROPERTIES
-        PUBLIC_HEADER latch_darwin.hpp
+        PUBLIC_HEADER latch_darwin.h
     )
 else()
     set_target_properties(latch
     PROPERTIES
-        PUBLIC_HEADER latch.hpp
+        PUBLIC_HEADER latch.h
     )
 endif()
 
@@ -69,9 +69,9 @@ elseif(LINUX)
 endif()
 
 # the header is always installed
-install(FILES   latch.hpp
-        TYPE        INCLUDE
-        # DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+install(FILES   latch.h
+        # TYPE        INCLUDE
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 install(TARGETS         latch
         EXPORT          ${PROJECT_NAME}-config

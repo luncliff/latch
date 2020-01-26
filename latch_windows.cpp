@@ -1,9 +1,9 @@
-﻿#include "latch.hpp"
+﻿#include "latch.h"
 
-// clang-format off
 #include <atomic>
 #include <system_error>
 #include <type_traits>
+// clang-format off
 
 #include <Windows.h>
 #include <synchapi.h>
