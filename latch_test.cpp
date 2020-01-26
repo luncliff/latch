@@ -8,7 +8,12 @@
 
 #include <chrono>
 #include <future>
+
+#if defined(__APPLE__)
+#include <latch_darwin.hpp>
+#else
 #include <latch.hpp>
+#endif
 
 using namespace std;
 using namespace std::chrono;
