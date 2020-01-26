@@ -25,6 +25,8 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
         target_compile_options(latch
         PUBLIC
             -stdlib=libc++
+        PRIVATE
+            -Wall -Wextra -fPIC
         )
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES MSVC)
@@ -39,13 +41,11 @@ if(WIN32)
     PROPERTIES
         WINDOWS_EXPORT_ALL_SYMBOLS True
     )
-
     target_link_libraries(latch
     PUBLIC
         kernel32 synchronization
     )
 endif()
-
 
 install(FILES   latch.hpp
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
@@ -76,13 +76,14 @@ install(FILES           ${VERSION_FILE_PATH}
 
 enable_testing()
 find_package(Catch2 CONFIG REQUIRED)
+find_package(Threads REQUIRED) # == pthread
 
 add_executable(latch_test
     latch_test.cpp
 )
 target_link_libraries(latch_test
 PRIVATE
-    Catch2::Catch2 latch
+    Threads::Threads Catch2::Catch2 latch
 )
 add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
 add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")

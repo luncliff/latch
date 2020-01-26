@@ -25,6 +25,14 @@ namespace std {
     class latch {
     public:
         /**
+         * @brief upper limit on the value of `expected` for constructor of `latch`
+         * @return ptrdiff_t    The maximum value of counter that the implementation supports
+         * @see http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1865r1.html
+         * @see /proc/sys/kernel/threads-max
+         */
+        static constexpr ptrdiff_t max() noexcept{ return 32; }
+    public:
+        /**
          * @brief   Initialize `counter` with `expected`
          * @param   expected
          * @pre     `expected >= 0` is true
