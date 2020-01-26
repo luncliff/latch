@@ -73,8 +73,10 @@ bool latch::try_wait() const noexcept {
     if (ctr->load() == 0)
         return true;
 
+    const timespec timeout{.tv_sec = 3};
     auto captured = ctr->load();
-    if (futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), captured) == 0)
+    if (futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), captured,
+                              &timeout) == 0)
         return counter == 0;
     return false;
 }
