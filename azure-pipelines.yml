@@ -56,3 +56,29 @@ jobs:
       - template: azure/steps-win-llvm.yml
         parameters:
           llvm_version: "9.0.0"
+
+  - job: ubuntu_cmake_clang8_debug
+    pool:
+      vmImage: "ubuntu-latest"
+    variables:
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-ubuntu.yml
+        parameters:
+          cmake_cxx_compiler: "clang-8"
+          cmake_work_dir: "build-ub"
+          cmake_install_dir: "../install"
+
+  - job: ubuntu_cmake_clang8_release
+    pool:
+      vmImage: "ubuntu-latest"
+    variables:
+      configuration: Release
+      is_dynamic: True
+    steps:
+      - template: azure/steps-ubuntu.yml
+        parameters:
+          cmake_cxx_compiler: "clang-8"
+          cmake_work_dir: "build-ub"
+          cmake_install_dir: "../install"
