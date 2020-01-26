@@ -7,8 +7,9 @@
 // clang-format off
 #include <unistd.h>
 #include <sys/syscall.h>
-#include <linux/futex.h>
 #include <sys/time.h>
+
+#include <linux/futex.h>
 // clang-format on
 
 /**
@@ -19,9 +20,8 @@
  *                  `errno` if something went wrong. (`EAGAIN` if under race, `EINTR` for spurious )
  * @link http://manpages.ubuntu.com/manpages/bionic/man2/futex.2.html
  */
-int futex_wait_on_address(int32_t *target, int32_t expected, //
-                          const struct timespec *timeout = nullptr)
-{
+int futex_wait_on_address(int32_t* target, int32_t expected, //
+                          const struct timespec* timeout = nullptr) {
     if (syscall(SYS_futex, target, FUTEX_WAIT_PRIVATE, expected, timeout, NULL,
                 0) != 0)
         return errno;
@@ -36,27 +36,23 @@ int futex_wait_on_address(int32_t *target, int32_t expected, //
  * @return int      `errno` after `syscall(SYS_futex, ...)`
  * @link http://manpages.ubuntu.com/manpages/bionic/man2/futex.2.html
  */
-int futex_wake_by_address(int32_t *target, int32_t num_waiters = INT_MAX)
-{
+int futex_wake_by_address(int32_t* target, int32_t num_waiters = INT_MAX) {
     syscall(SYS_futex, target, FUTEX_WAKE, num_waiters, NULL, NULL, 0);
     return errno;
 }
 
-namespace std
-{
+namespace std {
 
 static_assert(is_copy_assignable_v<latch> == false);
 static_assert(is_copy_constructible_v<latch> == false);
 
-void latch::arrive_and_wait(ptrdiff_t update) noexcept(false)
-{
+void latch::arrive_and_wait(ptrdiff_t update) noexcept(false) {
     this->count_down(update);
     this->wait();
 }
 
-void latch::count_down(ptrdiff_t update) noexcept(false)
-{
-    atomic_int32_t *ctr = reinterpret_cast<atomic_int32_t *>(&counter);
+void latch::count_down(ptrdiff_t update) noexcept(false) {
+    atomic_int32_t* ctr = reinterpret_cast<atomic_int32_t*>(&counter);
     int32_t change = static_cast<int32_t>(update);
 
     if (ctr->load() < change)
@@ -67,35 +63,33 @@ void latch::count_down(ptrdiff_t update) noexcept(false)
     if (ctr->load() != 0)
         return;
 
-    if (const auto ec = futex_wake_by_address(reinterpret_cast<int32_t *>(ctr)))
+    if (const auto ec = futex_wake_by_address(reinterpret_cast<int32_t*>(ctr)))
         throw system_error{ec, system_category(), "futex_wake_by_address"};
 }
 
-bool latch::try_wait() const noexcept
-{
-    atomic_int32_t *ctr = reinterpret_cast<atomic_int32_t *>(const_cast<ptrdiff_t *>(&counter));
+bool latch::try_wait() const noexcept {
+    atomic_int32_t* ctr =
+        reinterpret_cast<atomic_int32_t*>(const_cast<ptrdiff_t*>(&counter));
     if (ctr->load() == 0)
         return true;
 
     auto captured = ctr->load();
-    if (futex_wait_on_address(reinterpret_cast<int32_t *>(ctr), captured) == 0)
+    if (futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), captured) == 0)
         return counter == 0;
     return false;
 }
 
-void latch::wait() const noexcept(false)
-{
-    while (try_wait() == false)
-    {
+void latch::wait() const noexcept(false) {
+    while (try_wait() == false) {
         /// @todo need implementation for spurious wakeup
-        switch (errno)
-        {
+        switch (errno) {
         case 0:
         case EINTR:  // spurious wake up
         case EAGAIN: // under race. try again
             continue;
         default:
-            throw system_error{errno, system_category(), "futex_wait_on_address"};
+            throw system_error{errno, system_category(),
+                               "futex_wait_on_address"};
         }
     }
 }

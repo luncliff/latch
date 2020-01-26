@@ -1,6 +1,4 @@
-install
-package-lock.json
-site
+external
 
 .vscode
 

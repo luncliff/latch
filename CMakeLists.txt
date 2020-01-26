@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
 project(latch VERSION 1.0 LANGUAGES CXX)
 
-message(STATUS "using system: ${CMAKE_SYSTEM_NAME}")
+string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
+message(STATUS "using system: ${SYSTEM_NAME}")
+
 add_library(latch
     latch.hpp
-    latch_${CMAKE_SYSTEM_NAME}.cpp
+    latch_${SYSTEM_NAME}.cpp
 )
 
 set_target_properties(latch
@@ -25,8 +27,6 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
         target_compile_options(latch
         PUBLIC
             -stdlib=libc++
-        PRIVATE
-            -Wall -Wextra -fPIC
         )
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES MSVC)
@@ -41,11 +41,18 @@ if(WIN32)
     PROPERTIES
         WINDOWS_EXPORT_ALL_SYMBOLS True
     )
+
     target_link_libraries(latch
     PUBLIC
         kernel32 synchronization
     )
+elseif(APPLE)
+    target_link_libraries(latch
+    PUBLIC
+        ${CMAKE_DL_LIBS}
+    )
 endif()
+
 
 install(FILES   latch.hpp
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
@@ -75,15 +82,21 @@ install(FILES           ${VERSION_FILE_PATH}
 )
 
 enable_testing()
-find_package(Catch2 CONFIG REQUIRED)
-find_package(Threads REQUIRED) # == pthread
+# use 'external/catch2.zip' if not found
+find_package(Catch2 2.10 CONFIG REQUIRED
+    PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
+)
+get_target_property(Catch2_INCLUDE_DIR Catch2::Catch2
+    INTERFACE_INCLUDE_DIRECTORIES
+)
+message(STATUS "using Catch2: ${Catch2_INCLUDE_DIR}")
 
 add_executable(latch_test
     latch_test.cpp
 )
 target_link_libraries(latch_test
 PRIVATE
-    Threads::Threads Catch2::Catch2 latch
+    Catch2::Catch2 latch
 )
 add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
 add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")

@@ -82,3 +82,27 @@ jobs:
           cmake_cxx_compiler: "clang-8"
           cmake_work_dir: "build-ub"
           cmake_install_dir: "../install"
+
+  - job: mac_cmake_appleclang11_debug
+    pool:
+      vmImage: "macos-latest"
+    variables:
+      configuration: Debug
+      is_dynamic: True
+    steps:
+      - template: azure/steps-mac.yml
+        parameters:
+          cmake_work_dir: "build-osx"
+          cmake_install_dir: "../install"
+
+  - job: mac_cmake_appleclang11_release
+    pool:
+      vmImage: "macos-latest"
+    variables:
+      configuration: Release
+      is_dynamic: True
+    steps:
+      - template: azure/steps-mac.yml
+        parameters:
+          cmake_work_dir: "build-osx"
+          cmake_install_dir: "../install"
