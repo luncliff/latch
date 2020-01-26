@@ -16,9 +16,15 @@ steps:
         mkdir -p ${{ parameters.cmake_work_dir }};
     displayName: "Install: compilers, libcxx"
 
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        vcpkg install catch2
+
   - task: CMake@1
     inputs:
-      cmakeArgs: .. -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_BUILD_TYPE=$(configuration) -DCMAKE_INSTALL_PREFIX=${{ parameters.cmake_install_dir }} -DCMAKE_CXX_COMPILER=${{ parameters.cmake_cxx_compiler }}
+      cmakeArgs: .. -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_BUILD_TYPE=$(configuration) -DCMAKE_INSTALL_PREFIX=${{ parameters.cmake_install_dir }} -DCMAKE_CXX_COMPILER=${{ parameters.cmake_cxx_compiler }} -DCMAKE_TOOLCHAIN_FILE="/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake"
       workingDirectory: ${{ parameters.cmake_work_dir }}
 
   - task: CMake@1
