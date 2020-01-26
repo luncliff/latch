@@ -12,12 +12,13 @@ add_library(latch
 set_target_properties(latch
 PROPERTIES
     CXX_STANDARD 20
-    PUBLIC_HEADER latch.hpp
+    # PUBLIC_HEADER latch.hpp
 )
 
 target_include_directories(latch
 PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
@@ -27,6 +28,10 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
         target_compile_options(latch
         PUBLIC
             -stdlib=libc++
+        )
+        target_link_libraries(latch
+        PUBLIC
+            c++
         )
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES MSVC)
@@ -46,10 +51,10 @@ if(WIN32)
     PUBLIC
         kernel32 synchronization
     )
-elseif(APPLE)
+elseif(LINUX)
     target_link_libraries(latch
     PUBLIC
-        ${CMAKE_DL_LIBS}
+        stdc++
     )
 endif()
 
@@ -82,6 +87,7 @@ install(FILES           ${VERSION_FILE_PATH}
 )
 
 enable_testing()
+find_package(Threads REQUIRED)
 # use 'external/catch2.zip' if not found
 find_package(Catch2 2.10 CONFIG REQUIRED
     PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
@@ -96,8 +102,9 @@ add_executable(latch_test
 )
 target_link_libraries(latch_test
 PRIVATE
-    Catch2::Catch2 latch
+    Threads::Threads Catch2::Catch2 latch
 )
+
 add_test(NAME test_ctor_z   COMMAND latch_test "latch ctor zero")
 add_test(NAME test_ctor_n   COMMAND latch_test "latch ctor negative")
 add_test(NAME test_ctor_p   COMMAND latch_test "latch ctor positive")

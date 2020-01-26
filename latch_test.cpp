@@ -4,6 +4,8 @@
 //  32.8.1.2 class latch        [thread.latch.class]
 //
 #define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_GLOBAL_NEXTAFTER
+#define CATCH_CONFIG_FAST_COMPILE
 #include <catch2/catch.hpp>
 
 #include <chrono>
