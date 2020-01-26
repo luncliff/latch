@@ -12,8 +12,18 @@ add_library(latch
 set_target_properties(latch
 PROPERTIES
     CXX_STANDARD 20
-    # PUBLIC_HEADER latch.hpp
 )
+if(APPLE)
+    set_target_properties(latch
+    PROPERTIES
+        PUBLIC_HEADER latch_darwin.hpp
+    )
+else()
+    set_target_properties(latch
+    PROPERTIES
+        PUBLIC_HEADER latch.hpp
+    )
+endif()
 
 target_include_directories(latch
 PUBLIC
@@ -58,17 +68,18 @@ elseif(LINUX)
     )
 endif()
 
-
+# the header is always installed
 install(FILES   latch.hpp
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
+        TYPE        INCLUDE
+        # DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
-
 install(TARGETS         latch
         EXPORT          ${PROJECT_NAME}-config
         RUNTIME  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         LIBRARY  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         ARCHIVE  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        INCLUDES DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+        PUBLIC_HEADER 
+                 DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
 install(EXPORT      ${PROJECT_NAME}-config

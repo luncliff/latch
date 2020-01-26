@@ -1,7 +1,10 @@
 #pragma once
 #include <cstddef>
 
-#if defined(__APPLE__)
+#if !defined(__APPLE__)
+#error "this header is only for Darwin(macOS) platform"
+#endif
+
 #include <atomic>
 #include <pthread.h>
 
@@ -25,5 +28,3 @@ class latch {
     mutable pthread_mutex_t mtx;
 };
 } // namespace std
-
-#endif // defined(__APPLE__)
