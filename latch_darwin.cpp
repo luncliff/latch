@@ -1,16 +1,11 @@
 #include "latch_darwin.h"
 
-// clang-format off
-#include <chrono>
-#include <system_error>
 #include <cerrno>
+#include <chrono>
+#include <mutex>
+#include <system_error>
 
-#include <unistd.h>
-#include <sys/syscall.h>
 #include <sys/time.h>
-
-#include <mach/semaphore.h>
-// clang-format on
 
 using std::system_category;
 using std::system_error;
@@ -46,95 +41,60 @@ struct _Mutex_attr_t final {
                                "pthread_mutexattr_destroy"};
     }
 
-    pthread_mutexattr_t* get() {
+    pthread_mutexattr_t* native() {
         return &impl;
     }
 };
 
-/**
- * @brief Acquire current itme in `<chrono>` duration
- * 
- * @return std::chrono::nanoseconds 
- * @see _Time_after
- */
-auto _Time_current() noexcept -> std::chrono::nanoseconds {
-    return std::chrono::system_clock::now().time_since_epoch();
+_Pthread_mutex_t::_Pthread_mutex_t() noexcept(false) : impl{} {
+    _Mutex_attr_t attr{};
+    if (auto ec = pthread_mutex_init(&impl, attr.native()))
+        throw system_error{ec, system_category(), "pthread_mutex_init"};
+}
+_Pthread_mutex_t::~_Pthread_mutex_t() noexcept(false) {
+    if (auto ec = pthread_mutex_destroy(&impl))
+        throw system_error{ec, system_category(), "pthread_mutex_destroy"};
+}
+void _Pthread_mutex_t::lock() noexcept(false) {
+    if (auto ec = pthread_mutex_lock(&impl))
+        throw system_error{ec, system_category(), "pthread_mutex_lock"};
+}
+void _Pthread_mutex_t::unlock() noexcept(false) {
+    if (auto ec = pthread_mutex_unlock(&impl))
+        throw system_error{ec, system_category(), "pthread_mutex_unlock"};
+}
+bool _Pthread_mutex_t::try_lock() noexcept {
+    return pthread_mutex_trylock(&impl) == 0;
 }
 
-auto _Time_after(std::chrono::nanoseconds d,
-                 std::chrono::nanoseconds& tp) noexcept -> timespec {
-    using namespace std::chrono;
-    tp = _Time_current() + d;
-    return timespec{
-        .tv_sec = duration_cast<seconds>(tp).count(),
-        .tv_nsec = duration_cast<nanoseconds>(tp).count() % 1'000'000,
-    };
+_Pthread_cond_t::_Pthread_cond_t() noexcept(false) : impl{} {
+    if (auto ec = pthread_cond_init(&impl, nullptr))
+        throw system_error{ec, system_category(), "pthread_cond_init"};
 }
-
-int _Cond_timed_wait(pthread_mutex_t& mtx, pthread_cond_t& cv,
-                     const timespec& until) noexcept {
-    if (auto ec = pthread_mutex_lock(&mtx))
-        return ec;
-    auto reason = pthread_cond_timedwait(&cv, &mtx, &until);
-    if (auto ec = pthread_mutex_unlock(&mtx))
-        return ec;
-    // fprintf(stderr, "%p %s %d\n", pthread_self(), "pthread_cond_timedwait",
-    //         reason);
-    return reason;
+_Pthread_cond_t::~_Pthread_cond_t() noexcept(false) {
+    if (auto ec = pthread_cond_destroy(&impl))
+        throw system_error{ec, system_category(), "pthread_cond_destroy"};
 }
-
-int _Latch_timed_wait(const ptrdiff_t& counter, //
-                      pthread_mutex_t& mtx, pthread_cond_t& cv,
-                      std::chrono::nanoseconds sleep_duration) noexcept {
-    using namespace std;
-    using namespace std::chrono;
-    int ec = 0;
-
-    // Calculate the timepoint for `pthread_cond_timedwait`,
-    // which uses absolute time(== time point)
-    std::chrono::nanoseconds end_time{};
-    auto until = _Time_after(sleep_duration, end_time);
-    // fprintf(stderr, "sec %zu nsec %zu\n", until.tv_sec, until.tv_nsec);
-
-CheckCurrentCount:
-    if (counter == 0)
-        return 0;
-
-    // check time since it can be a spurious wakeup
-    if (end_time < _Time_current())
-        // reached timeout. return error
-        return ec;
-
-    ec = _Cond_timed_wait(mtx, cv, until);
-    if (ec == ETIMEDOUT) // this might be a spurious wakeup
-        goto CheckCurrentCount;
-    // reason containes error code at this moment
-    return ec;
+int32_t _Pthread_cond_t::notify_one() noexcept {
+    return pthread_cond_signal(&impl);
+}
+int32_t _Pthread_cond_t::notify_all() noexcept {
+    return pthread_cond_broadcast(&impl);
+}
+int32_t _Pthread_cond_t::wait(_Pthread_mutex_t& mtx) {
+    std::lock_guard lck{mtx};
+    return pthread_cond_wait(&impl, mtx.native());
+}
+int32_t _Pthread_cond_t::wait_for(_Pthread_mutex_t& mtx,
+                                  const timespec& until) {
+    std::lock_guard lck{mtx};
+    return pthread_cond_timedwait(&impl, mtx.native(), &until);
 }
 
 namespace std {
 
 latch::latch(ptrdiff_t expected) noexcept(false)
-    : counter{expected}, cv{}, mtx{} {
-
-    // instread of std::mutex, use customized attributes
-    _Mutex_attr_t attr{};
-
-    if (auto ec = pthread_mutex_init(&mtx, attr.get()))
-        throw system_error{ec, system_category(), "pthread_mutex_init"};
-    if (auto ec = pthread_cond_init(&cv, nullptr)) {
-        pthread_mutex_destroy(&mtx);
-        throw system_error{ec, system_category(), "pthread_cond_init"};
-    }
-}
-
-latch::~latch() noexcept(false) {
-    if (auto ec = pthread_cond_destroy(&cv)) {
-        pthread_mutex_destroy(&mtx);
-        throw system_error{ec, system_category(), "pthread_cond_destroy"};
-    }
-    if (auto ec = pthread_mutex_destroy(&mtx))
-        throw system_error{ec, system_category(), "pthread_mutex_destroy"};
+    : counter{expected}, mtx{}, cv{} {
 }
 
 void latch::arrive_and_wait(ptrdiff_t update) noexcept(false) {
@@ -150,31 +110,36 @@ void latch::count_down(ptrdiff_t update) noexcept(false) {
     if (counter > 0)
         return;
 
-    // fprintf(stderr, "%p %s \n", pthread_self(), "pthread_cond_signal");
-    if (auto ec = pthread_cond_signal(&cv))
-        throw system_error{ec, system_category(), "pthread_cond_signal"};
+    if (const auto ec = cv.notify_all())
+        throw system_error{ec, system_category(), "pthread_cond_broadcast"};
 }
 
 bool latch::try_wait() const noexcept {
+    using namespace std::chrono;
     // if counter equals zero, returns immediately
     if (counter == 0)
         return true;
 
     // The sleep time is random-picked for ease of debugging
-    const auto sleep_duration = 1536ms;
-    // Since latch doesn't provide interface for waiting with timeout,
-    // the code can wait more when the counter reached 0
-    if (const auto ec = _Latch_timed_wait(counter, mtx, cv, sleep_duration)) {
+    const auto sleep_time = 1536ms;
+    // pthread_cond_timedwait requires abs-time
+    const auto end_time = system_clock::now().time_since_epoch() + sleep_time;
+    const timespec until{
+        .tv_sec = duration_cast<seconds>(end_time).count(),
+        .tv_nsec = duration_cast<nanoseconds>(end_time).count() % 1'000'000,
+    };
+    if (const auto ec = cv.wait_for(mtx, until))
         errno = ec;
-        return false;
-    }
     return counter == 0;
 }
 
 void latch::wait() const noexcept(false) {
+    // Since latch doesn't provide interface for waiting with timeout,
+    // the code can wait more when the counter reached 0
     while (try_wait() == false) {
-        if (errno != ETIMEDOUT)
-            throw system_error{errno, system_category(), "_Latch_timed_wait"};
+        if (errno == ETIMEDOUT) // this might be a spurious wakeup
+            continue;
+        throw system_error{errno, system_category(), "pthread_cond_timedwait"};
     }
 }
 

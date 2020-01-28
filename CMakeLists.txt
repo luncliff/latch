@@ -61,6 +61,16 @@ if(WIN32)
     PUBLIC
         kernel32 synchronization
     )
+elseif(APPLE)
+    message(STATUS "using sysroot: ${CMAKE_OSX_SYSROOT}")
+    # target_include_directories(latch
+    # PRIVATE
+    #     ${CMAKE_OSX_SYSROOT}/System/Library/Frameworks/Kernel.framework/Headers
+    # )
+    # target_link_directories(latch
+    # PRIVATE
+    #     ${CMAKE_OSX_SYSROOT}/System/Library/Frameworks/Kernel.framework
+    # )
 elseif(LINUX)
     target_link_libraries(latch
     PUBLIC
