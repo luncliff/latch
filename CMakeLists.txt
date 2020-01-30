@@ -13,6 +13,7 @@ set_target_properties(latch
 PROPERTIES
     CXX_STANDARD 20
 )
+
 if(APPLE)
     set_target_properties(latch
     PROPERTIES
@@ -109,22 +110,60 @@ install(FILES           ${VERSION_FILE_PATH}
 
 enable_testing()
 find_package(Threads REQUIRED)
-# use 'external/catch2.zip' if not found
-find_package(Catch2 2.10 CONFIG REQUIRED
-    PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
-)
-get_target_property(Catch2_INCLUDE_DIR Catch2::Catch2
-    INTERFACE_INCLUDE_DIRECTORIES
-)
-message(STATUS "using Catch2: ${Catch2_INCLUDE_DIR}")
 
 add_executable(latch_test
     latch_test.cpp
 )
+
+set_target_properties(latch_test
+PROPERTIES
+    CXX_STANDARD 20
+)
+
 target_link_libraries(latch_test
 PRIVATE
-    Threads::Threads Catch2::Catch2 latch
+    Threads::Threads latch
 )
+
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup()
+    message(STATUS "  include\t: ${CONAN_INCLUDE_DIRS}")
+    message(STATUS "  dir    \t: ${CONAN_LIB_DIRS}")
+    message(STATUS "  libs   \t: ${CONAN_LIBS}")
+    message(STATUS "  defines\t: ${CONAN_DEFINES}")
+
+    target_include_directories(latch_test
+    PRIVATE
+        ${CONAN_INCLUDE_DIRS}
+    )
+    target_link_directories(latch_test
+    PRIVATE
+        ${CONAN_LIB_DIRS}
+    )
+    target_link_libraries(latch_test
+    PRIVATE
+        ${CONAN_LIBS}
+    )
+    target_compile_options(latch_test
+    PRIVATE
+        ${CONAN_DEFINES}
+    )
+else()
+    # use 'external/catch2.zip' if not found
+    find_package(Catch2 2.10 CONFIG REQUIRED
+        PATHS "${PROJECT_SOURCE_DIR}/external/share/Catch2"
+    )
+    get_target_property(Catch2_INCLUDE_DIR Catch2::Catch2
+        INTERFACE_INCLUDE_DIRECTORIES
+    )
+    message(STATUS "using Catch2: ${Catch2_INCLUDE_DIR}")
+    target_link_libraries(latch_test
+    PRIVATE
+        Catch2::Catch2
+    )
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
     target_link_libraries(latch_test
     PRIVATE
