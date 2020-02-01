@@ -108,6 +108,9 @@ install(FILES           ${VERSION_FILE_PATH}
         DESTINATION     ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
 )
 
+if(NOT BUILD_TESTING)
+    return()
+endif()
 enable_testing()
 find_package(Threads REQUIRED)
 

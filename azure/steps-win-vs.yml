@@ -13,7 +13,7 @@ steps:
 
   - task: CMake@1
     inputs:
-      cmakeArgs: . -A $(platform) -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg\scripts\buildsystems\vcpkg.cmake"
+      cmakeArgs: . -A $(platform) -DBUILD_SHARED_LIBS=$(is_dynamic) -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg\scripts\buildsystems\vcpkg.cmake" -DBUILD_TESTING=ON
       workingDirectory: "."
 
   - task: MSBuild@1
