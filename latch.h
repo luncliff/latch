@@ -1,3 +1,12 @@
+/**
+ * @file      latch.h
+ * @author    github.com/luncliff (luncliff@gmail.com)
+ * 
+ * @brief     C++ 20 <latch>
+ * @see       N4835
+ * 
+ * @copyright CC BY 4.0
+ */
 #pragma once
 #include <cstddef>
 
@@ -33,6 +42,11 @@ class latch {
     static constexpr ptrdiff_t max() noexcept {
         return 32;
     }
+
+#if defined(_WIN32)
+    void _Set_timeout(unsigned ns) noexcept;
+    unsigned _Get_timeout() noexcept;
+#endif
 
   public:
     /**
