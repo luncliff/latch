@@ -12,6 +12,10 @@
 #include <linux/futex.h>
 // clang-format on
 
+#if defined(__ANDROID_API__)
+static_assert(__ANDROID_API__ >= 24, "expect Android API level 24 or higher");
+#endif
+
 /**
  * @param target    On all platforms, futexes are four-byte integers
  * @param expected
@@ -73,7 +77,7 @@ bool latch::try_wait() const noexcept {
     if (ctr->load() == 0)
         return true;
 
-    const timespec timeout{.tv_sec = 3};
+    const timespec timeout{.tv_sec = 1};
     futex_wait_on_address(reinterpret_cast<int32_t*>(ctr), ctr->load(),
                           &timeout);
     return counter == 0;

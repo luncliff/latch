@@ -46,7 +46,7 @@ DWORD _Current_timeout_ms = INFINITE;
 
 void latch::_Set_timeout(unsigned ns) noexcept {
     const auto ms =
-        std::duration_cast<chrono::milliseconds>(chrono::nanoseconds{ns});
+        chrono::duration_cast<chrono::milliseconds>(chrono::nanoseconds{ns});
     _Current_timeout_ms = static_cast<DWORD>(ms.count());
 }
 unsigned latch::_Get_timeout() noexcept {

@@ -121,7 +121,7 @@ bool latch::try_wait() const noexcept {
         return true;
 
     // The sleep time is random-picked for ease of debugging
-    const auto sleep_time = 1536ms;
+    const auto sleep_time = 1000ms;
     // pthread_cond_timedwait requires abs-time
     const auto end_time = system_clock::now().time_since_epoch() + sleep_time;
     const timespec until{
