@@ -1,3 +1,14 @@
+/**
+ * @file      latch_darwin.h
+ * @author    github.com/luncliff (luncliff@gmail.com)
+ * 
+ * @brief     C++ 20 <latch> for Darwin (Mac OS X)
+ * @see       N4835
+ * @see       latch.h
+ * @see       POSIX thread
+ * 
+ * @copyright CC BY 4.0
+ */
 #pragma once
 #if !defined(__APPLE__)
 #error "this header is only for Darwin(macOS) platform"
