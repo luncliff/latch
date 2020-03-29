@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(latch VERSION 1.0 LANGUAGES CXX)
+project(latch VERSION 1.1 LANGUAGES CXX)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 message(STATUS "using system: ${SYSTEM_NAME}")
@@ -29,7 +29,7 @@ endif()
 target_include_directories(latch
 PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
 )
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
