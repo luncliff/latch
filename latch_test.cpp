@@ -88,9 +88,10 @@ TEST_CASE("latch try_wait") {
                            // With very low probability false, Otherwise counter == 0
                            return wg.try_wait();
                        });
-        this_thread::sleep_for(milliseconds{300});
 
         REQUIRE_NOTHROW(wg.count_down(1));
+        this_thread::sleep_for(milliseconds{300});
+
         REQUIRE(f.get() == true); // TODO: check system error code toghether
     }
 }
@@ -105,9 +106,10 @@ TEST_CASE("latch awake") {
                         [&wg]() -> void { return wg.wait(); });
         auto f3 = async(launch::async, //
                         [&wg]() -> void { return wg.arrive_and_wait(2); });
-        this_thread::sleep_for(milliseconds{300});
 
         REQUIRE_NOTHROW(wg.count_down(1));
+        this_thread::sleep_for(milliseconds{300});
+
         REQUIRE(f1.get() == true);
         REQUIRE_NOTHROW(f2.get());
         REQUIRE_NOTHROW(f3.get());
