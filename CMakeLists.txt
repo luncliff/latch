@@ -32,7 +32,7 @@ PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
 )
 
-if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
     if(WIN32)
         # clang-cl is not considered for now ...
     else()
@@ -45,10 +45,15 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
             c++
         )
     endif()
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES MSVC)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     target_compile_options(latch
     PUBLIC
         /W4
+    )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    target_link_libraries(latch
+    PUBLIC
+        stdc++
     )
 endif()
 
